@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydb
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: postgres -c listen_addresses='*'
+
+  backend:
+    build:
+      context: ./orders_server
+    container_name: backend
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mydb
+      - PORT=5000
+    depends_on:
+      - postgres
+    command: /bin/sh -c "npm run dev"
+
+  frontend:
+    build:
+      context: ./orders_client
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    command: npm run dev
+
+volumes:
+  postgres_data:
